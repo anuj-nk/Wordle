@@ -1,4 +1,4 @@
-import type { TileFeedback, TileStatus } from './types';
+import type { TileFeedback, TileStatus } from './types.js';
 
 export type GuessValidation =
   | { ok: true; value: string }
