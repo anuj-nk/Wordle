@@ -44,6 +44,20 @@ describe('services', () => {
     expect(updated.guesses[0].feedback.every((tile) => tile.status === 'correct')).toBe(true);
   });
 
+  it('hides active answers but includes completed answers in recent games', () => {
+    const { playerService, gameService } = services();
+    const player = playerService.createPlayer();
+    const game = gameService.startOrResumeGame(player.code);
+
+    expect(game.answer).toBeNull();
+
+    gameService.submitGuess(game.id, player.code, 'crane');
+    const resumed = playerService.resumePlayer(player.code);
+
+    expect(resumed.activeGame).toBeNull();
+    expect(resumed.recentGames[0].answer).toBe('crane');
+  });
+
   it('marks a game lost after five incorrect guesses', () => {
     const { playerService, gameService } = services();
     const player = playerService.createPlayer();

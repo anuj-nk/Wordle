@@ -11,11 +11,10 @@ export function Header({ playerCode, resumeCode, onResumeCodeChange, onResume }:
   return (
     <header className="header">
       <div>
-        <p className="eyebrow">GoLinks intern project</p>
         <h1>Definitely Not Wordle</h1>
       </div>
       <div className="code-panel">
-        <span>Your code</span>
+        <span>Player Code</span>
         <strong>{playerCode ?? 'Loading'}</strong>
         <button
           type="button"
@@ -25,6 +24,7 @@ export function Header({ playerCode, resumeCode, onResumeCodeChange, onResume }:
         >
           <Copy size={16} />
         </button>
+        <p>Use this code to return to your games on another device.</p>
         <div className="resume-row">
           <input value={resumeCode} onChange={(event) => onResumeCodeChange(event.target.value)} placeholder="Enter code" />
           <button type="button" onClick={onResume}>Resume</button>

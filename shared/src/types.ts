@@ -20,6 +20,7 @@ export interface GameState {
   id: number;
   playerCode: string;
   status: GameStatus;
+  answer: string | null;
   attemptCount: number;
   guesses: GuessRecord[];
   createdAt: string;

@@ -1,21 +1,17 @@
 import { scoreGuess, validateGuess, type GameState } from '@wordle/shared';
 import type { GameRow, GuessRow, createGameRepository } from '../repositories/gameRepository.js';
 import type { createPlayerRepository } from '../repositories/playerRepository.js';
+import { chooseAnswer } from './wordList.js';
 
 type PlayerRepository = ReturnType<typeof createPlayerRepository>;
 type GameRepository = ReturnType<typeof createGameRepository>;
-
-const ANSWERS = ['crane', 'slate', 'proud', 'flint', 'cider'];
-
-function chooseAnswer() {
-  return ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
-}
 
 function toGameState(game: GameRow, guesses: GuessRow[]): GameState {
   return {
     id: game.id,
     playerCode: game.playerCode,
     status: game.status,
+    answer: game.status === 'active' ? null : game.answer,
     attemptCount: game.attemptCount,
     guesses: guesses.map((guess) => ({
       id: guess.id,

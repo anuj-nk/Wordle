@@ -11,6 +11,7 @@ function toGameState(game: GameRow, guesses: GuessRow[]): GameState {
     id: game.id,
     playerCode: game.playerCode,
     status: game.status,
+    answer: game.status === 'active' ? null : game.answer,
     attemptCount: game.attemptCount,
     guesses: guesses.map((guess) => ({
       id: guess.id,

@@ -90,6 +90,20 @@ export function App() {
     setMessage(`Answer: ${result.answer.toUpperCase()}`);
   }
 
+  async function handlePlayAgain() {
+    if (!player) return;
+    try {
+      const nextGame = await startGame(player.code);
+      const nextPlayer = await resumePlayer(player.code);
+      setGame(nextGame);
+      setPlayer(nextPlayer);
+      setCurrentGuess('');
+      setMessage('Guess any five letters.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not start a new game.');
+    }
+  }
+
   return (
     <main className="app-shell">
       <Header playerCode={player?.code ?? null} resumeCode={resumeCode} onResumeCodeChange={setResumeCode} onResume={handleResume} />
@@ -98,7 +112,12 @@ export function App() {
           <Board game={game} currentGuess={currentGuess} />
           <p className="message">{message}</p>
           <Keyboard game={game} onKey={handleKey} />
-          <button className="secondary-action" type="button" onClick={handleReveal}>Reveal answer</button>
+          <div className="actions">
+            {game?.status !== 'active' && (
+              <button className="primary-action" type="button" onClick={handlePlayAgain}>Play Again</button>
+            )}
+            <button className="secondary-action" type="button" onClick={handleReveal}>Reveal answer</button>
+          </div>
         </div>
         <StatsPanel player={player} />
       </section>

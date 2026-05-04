@@ -12,7 +12,10 @@ export function StatsPanel({ player }: { player: PlayerState | null }) {
       <h3>Recent games</h3>
       <ul>
         {(player?.recentGames ?? []).slice(0, 5).map((game) => (
-          <li key={game.id}>{game.status} in {game.attemptCount}/5</li>
+          <li key={game.id}>
+            <span>{game.status} in {game.attemptCount}/5</span>
+            {game.answer && <strong>{game.answer.toUpperCase()}</strong>}
+          </li>
         ))}
       </ul>
     </aside>

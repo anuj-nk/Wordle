@@ -2,6 +2,9 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
+    "paths": {
+      "@wordle/shared": ["../shared/dist/index.d.ts"]
+    },
     "types": ["vite/client"],
     "noEmit": true
   },

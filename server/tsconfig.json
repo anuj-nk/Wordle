@@ -2,8 +2,12 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "src",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "paths": {
+      "@wordle/shared": ["../shared/dist/index.d.ts"]
+    },
     "types": ["node"]
   },
   "include": ["src"]
