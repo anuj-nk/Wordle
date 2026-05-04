@@ -1,11 +1,9 @@
-import express from 'express';
+import { createApp } from './app.js';
+import { openDatabase } from './db/database.js';
 
-const app = express();
 const port = Number(process.env.PORT ?? 3000);
-
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true });
-});
+const db = openDatabase();
+const app = createApp(db);
 
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
