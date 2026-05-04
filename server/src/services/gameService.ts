@@ -31,8 +31,8 @@ export function createGameService(
   games: GameRepository,
   selectAnswer = chooseAnswer
 ) {
-  function ownedGame(id: number, playerCode: string) {
-    const game = games.findById(id);
+  async function ownedGame(id: number, playerCode: string) {
+    const game = await games.findById(id);
     if (!game || game.playerCode !== playerCode) {
       throw new Error('Game not found.');
     }
@@ -40,16 +40,16 @@ export function createGameService(
   }
 
   return {
-    startOrResumeGame(playerCode: string): GameState {
-      if (!players.findByCode(playerCode)) {
+    async startOrResumeGame(playerCode: string): Promise<GameState> {
+      if (!(await players.findByCode(playerCode))) {
         throw new Error('Player not found.');
       }
 
-      const active = games.findActiveByPlayerCode(playerCode) ?? games.create(playerCode, selectAnswer());
-      return toGameState(active, games.listGuesses(active.id));
+      const active = (await games.findActiveByPlayerCode(playerCode)) ?? await games.create(playerCode, selectAnswer());
+      return toGameState(active, await games.listGuesses(active.id));
     },
-    submitGuess(id: number, playerCode: string, rawGuess: string): GameState {
-      const game = ownedGame(id, playerCode);
+    async submitGuess(id: number, playerCode: string, rawGuess: string): Promise<GameState> {
+      const game = await ownedGame(id, playerCode);
       if (game.status !== 'active') {
         throw new Error('Game is already complete.');
       }
@@ -61,21 +61,21 @@ export function createGameService(
 
       const attemptNumber = game.attemptCount + 1;
       const feedback = scoreGuess(game.answer, validation.value);
-      games.addGuess(game.id, attemptNumber, validation.value, feedback);
+      await games.addGuess(game.id, attemptNumber, validation.value, feedback);
 
       if (validation.value === game.answer) {
-        games.complete(game.id, 'won', attemptNumber);
+        await games.complete(game.id, 'won', attemptNumber);
       } else if (attemptNumber >= 5) {
-        games.complete(game.id, 'lost', attemptNumber);
+        await games.complete(game.id, 'lost', attemptNumber);
       } else {
-        games.updateAttemptCount(game.id, attemptNumber);
+        await games.updateAttemptCount(game.id, attemptNumber);
       }
 
-      const updated = games.findById(game.id)!;
-      return toGameState(updated, games.listGuesses(game.id));
+      const updated = (await games.findById(game.id))!;
+      return toGameState(updated, await games.listGuesses(game.id));
     },
-    getAnswer(id: number, playerCode: string): { answer: string } {
-      const game = ownedGame(id, playerCode);
+    async getAnswer(id: number, playerCode: string): Promise<{ answer: string }> {
+      const game = await ownedGame(id, playerCode);
       return { answer: game.answer };
     }
   };

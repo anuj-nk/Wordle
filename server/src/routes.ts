@@ -27,37 +27,41 @@ export function createApiRouter(db: AppDatabase, options: RouteOptions = {}) {
     res.json({ ok: true });
   });
 
-  router.post('/players', (_req, res) => {
-    res.status(201).json(playerService.createPlayer());
-  });
-
-  router.get('/players/:code', (req, res, next) => {
+  router.post('/players', async (_req, res, next) => {
     try {
-      res.json(playerService.resumePlayer(req.params.code));
+      res.status(201).json(await playerService.createPlayer());
     } catch (error) {
       next(error);
     }
   });
 
-  router.post('/games', (req, res, next) => {
+  router.get('/players/:code', async (req, res, next) => {
     try {
-      res.status(201).json(gameService.startOrResumeGame(req.body.playerCode));
+      res.json(await playerService.resumePlayer(req.params.code));
     } catch (error) {
       next(error);
     }
   });
 
-  router.post('/games/:id/guesses', (req, res, next) => {
+  router.post('/games', async (req, res, next) => {
     try {
-      res.json(gameService.submitGuess(Number(req.params.id), req.body.playerCode, req.body.guess));
+      res.status(201).json(await gameService.startOrResumeGame(req.body.playerCode));
     } catch (error) {
       next(error);
     }
   });
 
-  router.get('/games/:id/answer', (req, res, next) => {
+  router.post('/games/:id/guesses', async (req, res, next) => {
     try {
-      res.json(gameService.getAnswer(Number(req.params.id), String(req.query.playerCode ?? '')));
+      res.json(await gameService.submitGuess(Number(req.params.id), req.body.playerCode, req.body.guess));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/games/:id/answer', async (req, res, next) => {
+    try {
+      res.json(await gameService.getAnswer(Number(req.params.id), String(req.query.playerCode ?? '')));
     } catch (error) {
       next(error);
     }

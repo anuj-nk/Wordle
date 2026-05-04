@@ -26,8 +26,8 @@ interface RawGameRow {
   answer: string;
   status: GameStatus;
   attempt_count: number;
-  created_at: string;
-  completed_at: string | null;
+  created_at: Date | string;
+  completed_at: Date | string | null;
 }
 
 interface RawGuessRow {
@@ -35,8 +35,12 @@ interface RawGuessRow {
   game_id: number;
   attempt_number: number;
   guess: string;
-  feedback_json: string;
-  created_at: string;
+  feedback_json: TileFeedback[] | string;
+  created_at: Date | string;
+}
+
+function serializeDate(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : value;
 }
 
 function mapGame(row: RawGameRow): GameRow {
@@ -46,67 +50,79 @@ function mapGame(row: RawGameRow): GameRow {
     answer: row.answer,
     status: row.status,
     attemptCount: row.attempt_count,
-    createdAt: row.created_at,
-    completedAt: row.completed_at
+    createdAt: serializeDate(row.created_at),
+    completedAt: row.completed_at ? serializeDate(row.completed_at) : null
   };
 }
 
 function mapGuess(row: RawGuessRow): GuessRow {
+  const feedback = typeof row.feedback_json === 'string'
+    ? JSON.parse(row.feedback_json) as TileFeedback[]
+    : row.feedback_json;
+
   return {
     id: row.id,
     gameId: row.game_id,
     attemptNumber: row.attempt_number,
     guess: row.guess,
-    feedback: JSON.parse(row.feedback_json) as TileFeedback[],
-    createdAt: row.created_at
+    feedback,
+    createdAt: serializeDate(row.created_at)
   };
 }
 
 export function createGameRepository(db: AppDatabase) {
   return {
-    create(playerCode: string, answer: string): GameRow {
-      const result = db
-        .prepare('INSERT INTO games (player_code, answer, status) VALUES (?, ?, ?)')
-        .run(playerCode, answer, 'active');
-      return this.findById(Number(result.lastInsertRowid))!;
+    async create(playerCode: string, answer: string): Promise<GameRow> {
+      const result = await db.query<RawGameRow>(
+        "INSERT INTO games (player_code, answer, status) VALUES ($1, $2, 'active') RETURNING *",
+        [playerCode, answer]
+      );
+      return mapGame(result.rows[0]);
     },
-    findById(id: number): GameRow | null {
-      const row = db.prepare('SELECT * FROM games WHERE id = ?').get(id) as RawGameRow | undefined;
-      return row ? mapGame(row) : null;
+    async findById(id: number): Promise<GameRow | null> {
+      const result = await db.query<RawGameRow>('SELECT * FROM games WHERE id = $1', [id]);
+      return result.rows[0] ? mapGame(result.rows[0]) : null;
     },
-    findActiveByPlayerCode(playerCode: string): GameRow | null {
-      const row = db
-        .prepare("SELECT * FROM games WHERE player_code = ? AND status = 'active'")
-        .get(playerCode) as RawGameRow | undefined;
-      return row ? mapGame(row) : null;
+    async findActiveByPlayerCode(playerCode: string): Promise<GameRow | null> {
+      const result = await db.query<RawGameRow>(
+        "SELECT * FROM games WHERE player_code = $1 AND status = 'active'",
+        [playerCode]
+      );
+      return result.rows[0] ? mapGame(result.rows[0]) : null;
     },
-    listRecentByPlayerCode(playerCode: string, limit = 10): GameRow[] {
-      const rows = db
-        .prepare("SELECT * FROM games WHERE player_code = ? AND status != 'active' ORDER BY id DESC LIMIT ?")
-        .all(playerCode, limit) as unknown as RawGameRow[];
-      return rows.map(mapGame);
+    async listRecentByPlayerCode(playerCode: string, limit = 10): Promise<GameRow[]> {
+      const safeLimit = Math.max(1, Math.min(50, Math.trunc(limit)));
+      const result = await db.query<RawGameRow>(
+        `SELECT * FROM games ORDER BY id DESC LIMIT ${safeLimit * 3}`
+      );
+      return result.rows
+        .map(mapGame)
+        .filter((game) => game.playerCode === playerCode && game.status !== 'active')
+        .slice(0, safeLimit);
     },
-    addGuess(gameId: number, attemptNumber: number, guess: string, feedback: TileFeedback[]): GuessRow {
-      const result = db
-        .prepare('INSERT INTO guesses (game_id, attempt_number, guess, feedback_json) VALUES (?, ?, ?, ?)')
-        .run(gameId, attemptNumber, guess, JSON.stringify(feedback));
-      return this.listGuesses(gameId).find((row) => row.id === Number(result.lastInsertRowid))!;
+    async addGuess(gameId: number, attemptNumber: number, guess: string, feedback: TileFeedback[]): Promise<GuessRow> {
+      const result = await db.query<RawGuessRow>(
+        'INSERT INTO guesses (game_id, attempt_number, guess, feedback_json) VALUES ($1, $2, $3, $4) RETURNING *',
+        [gameId, attemptNumber, guess, JSON.stringify(feedback)]
+      );
+      return mapGuess(result.rows[0]);
     },
-    listGuesses(gameId: number): GuessRow[] {
-      const rows = db
-        .prepare('SELECT * FROM guesses WHERE game_id = ? ORDER BY attempt_number ASC')
-        .all(gameId) as unknown as RawGuessRow[];
-      return rows.map(mapGuess);
+    async listGuesses(gameId: number): Promise<GuessRow[]> {
+      const result = await db.query<RawGuessRow>(
+        'SELECT * FROM guesses WHERE game_id = $1 ORDER BY attempt_number ASC',
+        [gameId]
+      );
+      return result.rows.map(mapGuess);
     },
-    updateAttemptCount(id: number, attemptCount: number): void {
-      db.prepare('UPDATE games SET attempt_count = ? WHERE id = ?').run(attemptCount, id);
+    async updateAttemptCount(id: number, attemptCount: number): Promise<void> {
+      await db.query('UPDATE games SET attempt_count = $1 WHERE id = $2', [attemptCount, id]);
     },
-    complete(id: number, status: Exclude<GameStatus, 'active'>, attemptCount: number): void {
-      db.prepare('UPDATE games SET status = ?, attempt_count = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?').run(
+    async complete(id: number, status: Exclude<GameStatus, 'active'>, attemptCount: number): Promise<void> {
+      await db.query('UPDATE games SET status = $1, attempt_count = $2, completed_at = NOW() WHERE id = $3', [
         status,
         attemptCount,
         id
-      );
+      ]);
     }
   };
 }

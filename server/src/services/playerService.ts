@@ -42,34 +42,34 @@ export function createPlayerService(
   games: GameRepository,
   generateCode = generatePlayerCode
 ) {
-  function stateFor(code: string): PlayerState {
-    const player = players.findByCode(code);
+  async function stateFor(code: string): Promise<PlayerState> {
+    const player = await players.findByCode(code);
     if (!player) {
       throw new Error('Player not found.');
     }
 
-    players.touch(code);
-    const active = games.findActiveByPlayerCode(code);
-    const recent = games.listRecentByPlayerCode(code);
+    await players.touch(code);
+    const active = await games.findActiveByPlayerCode(code);
+    const recent = await games.listRecentByPlayerCode(code);
 
     return {
       code,
-      activeGame: active ? toGameState(active, games.listGuesses(active.id)) : null,
-      recentGames: recent.map((game) => toGameState(game, games.listGuesses(game.id))),
+      activeGame: active ? toGameState(active, await games.listGuesses(active.id)) : null,
+      recentGames: await Promise.all(recent.map(async (game) => toGameState(game, await games.listGuesses(game.id)))),
       stats: statsFor(recent)
     };
   }
 
   return {
-    createPlayer(): PlayerState {
+    async createPlayer(): Promise<PlayerState> {
       let code = generateCode();
-      while (players.findByCode(code)) {
+      while (await players.findByCode(code)) {
         code = generateCode();
       }
-      players.create(code);
+      await players.create(code);
       return stateFor(code);
     },
-    resumePlayer(code: string): PlayerState {
+    resumePlayer(code: string): Promise<PlayerState> {
       return stateFor(code);
     }
   };

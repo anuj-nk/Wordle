@@ -1,41 +1,18 @@
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { Pool } from 'pg';
 import { migrate } from './schema.js';
 
-export type AppDatabase = DatabaseSync;
+export type AppDatabase = Pool;
 
-function openSqliteFile(filename: string) {
-  if (filename !== ':memory:') {
-    mkdirSync(dirname(filename), { recursive: true });
+export async function openDatabase(connectionString = process.env.DATABASE_URL) {
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is required. Set it to your Neon Postgres connection string.');
   }
 
-  return new DatabaseSync(filename);
-}
+  const db = new Pool({
+    connectionString,
+    ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false }
+  });
 
-export function openDatabase(filename = process.env.DATABASE_URL ?? './wordle.sqlite') {
-  let db: DatabaseSync;
-
-  try {
-    db = openSqliteFile(filename);
-  } catch (error) {
-    if (filename === ':memory:' || process.env.DATABASE_URL === undefined) {
-      throw error;
-    }
-
-    console.warn(`Could not open SQLite database at ${filename}; falling back to /tmp/wordle.sqlite.`);
-    db = openSqliteFile('/tmp/wordle.sqlite');
-  }
-
-  db.exec('PRAGMA foreign_keys = ON');
-  db.exec('PRAGMA journal_mode = WAL');
-  migrate(db);
-  return db;
-}
-
-export function openInMemoryDatabase() {
-  const db = new DatabaseSync(':memory:');
-  db.exec('PRAGMA foreign_keys = ON');
-  migrate(db);
+  await migrate(db);
   return db;
 }

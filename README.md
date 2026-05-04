@@ -1,6 +1,6 @@
 # Definitely Not Wordle
 
-A fullstack Wordle-style internship project built with React, Express, TypeScript, and SQLite.
+A fullstack Wordle-style internship project built with React, Express, TypeScript, and Postgres.
 
 ## Features
 
@@ -9,7 +9,7 @@ A fullstack Wordle-style internship project built with React, Express, TypeScrip
 - Wordle-style green, yellow, and gray feedback.
 - Generated player codes for lightweight session continuity.
 - One active game per player.
-- SQLite persistence for players, games, guesses, and stats.
+- Postgres persistence for players, games, guesses, and stats.
 - Required get-answer endpoint at `GET /api/games/:id/answer?playerCode=CODE`.
 
 ## Local Development
@@ -18,6 +18,8 @@ A fullstack Wordle-style internship project built with React, Express, TypeScrip
 npm install
 npm run dev
 ```
+
+Set `DATABASE_URL` to a Postgres connection string before starting the server. For deployment, a Neon connection string works well.
 
 The Express server runs at `http://localhost:3000`.
 
@@ -38,6 +40,5 @@ Render settings:
 - Build command: `npm install && npm run build`
 - Start command: `npm start`
 - Health check path: `/api/health`
-- Persistent disk mount: `/var/data`
-- Environment variable: `DATABASE_URL=/var/data/wordle.sqlite`
-- Node version: `24` or newer, because the backend uses Node's built-in SQLite module.
+- Environment variable: `DATABASE_URL=<your Neon pooled Postgres connection string>`
+- Node version: `24`

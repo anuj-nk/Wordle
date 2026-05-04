@@ -2,7 +2,7 @@ import { createApp } from './app.js';
 import { openDatabase } from './db/database.js';
 
 const port = Number(process.env.PORT ?? 3000);
-const db = openDatabase();
+const db = await openDatabase();
 const app = createApp(db);
 
 app.listen(port, () => {

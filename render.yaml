@@ -6,12 +6,8 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
-    disk:
-      name: wordle-sqlite
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: 24
       - key: DATABASE_URL
-        value: /var/data/wordle.sqlite
+        sync: false
