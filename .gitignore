@@ -6,3 +6,7 @@ dist/
 client/dist/
 server/dist/
 shared/dist/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
