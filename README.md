@@ -5,7 +5,7 @@ A fullstack Wordle-style internship project built with React, Express, TypeScrip
 ## Features
 
 - Five-letter guessing game with five attempts.
-- Any five alphabetic letters are accepted.
+- Guesses must be valid five-letter words.
 - Wordle-style green, yellow, and gray feedback.
 - Generated player codes for lightweight session continuity.
 - One active game per player.

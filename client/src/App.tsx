@@ -21,7 +21,7 @@ export function App() {
       const nextGame = nextPlayer.activeGame ?? await startGame(nextPlayer.code);
       setPlayer(nextPlayer);
       setGame(nextGame);
-      setMessage('Guess any five letters.');
+      setMessage('Guess a valid five-letter word.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not load the game.');
     }
@@ -98,7 +98,7 @@ export function App() {
       setGame(nextGame);
       setPlayer(nextPlayer);
       setCurrentGuess('');
-      setMessage('Guess any five letters.');
+      setMessage('Guess a valid five-letter word.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not start a new game.');
     }

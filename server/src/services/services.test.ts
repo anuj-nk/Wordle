@@ -52,6 +52,19 @@ describe('services', () => {
     await db.end();
   });
 
+  it('rejects guesses that are not in the word list without using an attempt', async () => {
+    const { db, playerService, gameService } = await services();
+    const player = await playerService.createPlayer();
+    const game = await gameService.startOrResumeGame(player.code);
+
+    await expect(gameService.submitGuess(game.id, player.code, 'zzzzz')).rejects.toThrow('Guess must be a valid word.');
+
+    const unchanged = await gameService.startOrResumeGame(player.code);
+    expect(unchanged.attemptCount).toBe(0);
+    expect(unchanged.guesses).toHaveLength(0);
+    await db.end();
+  });
+
   it('hides active answers but includes completed answers in recent games', async () => {
     const { db, playerService, gameService } = await services();
     const player = await playerService.createPlayer();
@@ -72,11 +85,11 @@ describe('services', () => {
     const player = await playerService.createPlayer();
     const game = await gameService.startOrResumeGame(player.code);
 
-    await gameService.submitGuess(game.id, player.code, 'zzzzz');
-    await gameService.submitGuess(game.id, player.code, 'yyyyy');
-    await gameService.submitGuess(game.id, player.code, 'xxxxx');
-    await gameService.submitGuess(game.id, player.code, 'wwwww');
-    const updated = await gameService.submitGuess(game.id, player.code, 'vvvvv');
+    await gameService.submitGuess(game.id, player.code, 'apple');
+    await gameService.submitGuess(game.id, player.code, 'grape');
+    await gameService.submitGuess(game.id, player.code, 'mango');
+    await gameService.submitGuess(game.id, player.code, 'table');
+    const updated = await gameService.submitGuess(game.id, player.code, 'wheat');
 
     expect(updated.status).toBe('lost');
     expect(updated.attemptCount).toBe(5);

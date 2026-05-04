@@ -1,7 +1,7 @@
 import { scoreGuess, validateGuess, type GameState } from '@wordle/shared';
 import type { GameRow, GuessRow, createGameRepository } from '../repositories/gameRepository.js';
 import type { createPlayerRepository } from '../repositories/playerRepository.js';
-import { chooseAnswer } from './wordList.js';
+import { chooseAnswer, isValidGuess } from './wordList.js';
 
 type PlayerRepository = ReturnType<typeof createPlayerRepository>;
 type GameRepository = ReturnType<typeof createGameRepository>;
@@ -57,6 +57,10 @@ export function createGameService(
       const validation = validateGuess(rawGuess);
       if (!validation.ok) {
         throw new Error(validation.message);
+      }
+
+      if (!isValidGuess(validation.value)) {
+        throw new Error('Guess must be a valid word.');
       }
 
       const attemptNumber = game.attemptCount + 1;
