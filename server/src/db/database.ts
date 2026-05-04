@@ -5,12 +5,28 @@ import { migrate } from './schema.js';
 
 export type AppDatabase = DatabaseSync;
 
-export function openDatabase(filename = process.env.DATABASE_URL ?? './wordle.sqlite') {
+function openSqliteFile(filename: string) {
   if (filename !== ':memory:') {
     mkdirSync(dirname(filename), { recursive: true });
   }
 
-  const db = new DatabaseSync(filename);
+  return new DatabaseSync(filename);
+}
+
+export function openDatabase(filename = process.env.DATABASE_URL ?? './wordle.sqlite') {
+  let db: DatabaseSync;
+
+  try {
+    db = openSqliteFile(filename);
+  } catch (error) {
+    if (filename === ':memory:' || process.env.DATABASE_URL === undefined) {
+      throw error;
+    }
+
+    console.warn(`Could not open SQLite database at ${filename}; falling back to /tmp/wordle.sqlite.`);
+    db = openSqliteFile('/tmp/wordle.sqlite');
+  }
+
   db.exec('PRAGMA foreign_keys = ON');
   db.exec('PRAGMA journal_mode = WAL');
   migrate(db);
