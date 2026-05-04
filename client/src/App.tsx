@@ -4,7 +4,7 @@ import { Board } from './components/Board';
 import { Header } from './components/Header';
 import { Keyboard } from './components/Keyboard';
 import { StatsPanel } from './components/StatsPanel';
-import { createPlayer, revealAnswer, resumePlayer, savedPlayerCode, savePlayerCode, startGame, submitGuess } from './api';
+import { createPlayer, resumePlayer, savedPlayerCode, savePlayerCode, startGame, submitGuess } from './api';
 
 export function App() {
   const [player, setPlayer] = useState<PlayerState | null>(null);
@@ -43,10 +43,10 @@ export function App() {
       setGame(updated);
       setCurrentGuess('');
       if (updated.status === 'won') {
-        setMessage('Solved. Nicely done.');
+        setMessage(`Solved. The answer was ${updated.answer?.toUpperCase()}.`);
         await refreshPlayer(player.code);
       } else if (updated.status === 'lost') {
-        setMessage('Game over. Reveal the answer or start again later.');
+        setMessage(`Game over. The answer was ${updated.answer?.toUpperCase()}.`);
         await refreshPlayer(player.code);
       } else {
         setMessage('Keep going.');
@@ -84,12 +84,6 @@ export function App() {
     }
   }
 
-  async function handleReveal() {
-    if (!player || !game) return;
-    const result = await revealAnswer(game.id, player.code);
-    setMessage(`Answer: ${result.answer.toUpperCase()}`);
-  }
-
   async function handlePlayAgain() {
     if (!player) return;
     try {
@@ -116,7 +110,6 @@ export function App() {
             {game?.status !== 'active' && (
               <button className="primary-action" type="button" onClick={handlePlayAgain}>Play Again</button>
             )}
-            <button className="secondary-action" type="button" onClick={handleReveal}>Reveal answer</button>
           </div>
         </div>
         <StatsPanel player={player} />
